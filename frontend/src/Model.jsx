@@ -99,6 +99,7 @@ function Model({ show, onClose, orphanageId }) {
 
   return (
     <div className="modal fade show d-block premium-modal-backdrop"
+      style={{ position: "fixed", inset: 0, zIndex: 9999 }}
       tabIndex="-1"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-dialog modal-dialog-centered">

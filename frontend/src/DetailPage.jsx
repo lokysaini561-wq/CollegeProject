@@ -16,24 +16,32 @@ function DetailPage() {
   const [usingDummy, setUsingDummy] = useState(false);
 
   const handleDonateClick = async () => {
+    console.log("Donate button clicked. Orphanage:", orphanage);
+    
     // 1. Check Demo Login First
     if (localStorage.getItem("isDemoLoggedIn") === "true") {
-      navigate(`/donate/${orphanage._id}`);
+      const targetId = orphanage?._id || id || "demo-001";
+      console.log("Already demo logged in. Navigating to:", targetId);
+      navigate(`/donate/${targetId}`);
       return;
     }
 
     // 2. Check Backend Login
     try {
+      console.log("Checking backend auth...");
       const res = await fetch("http://localhost:3200/check-adlogin", {
         credentials: "include"
       });
       const data = await res.json();
       if (data.loggedIn) {
-        navigate(`/donate/${orphanage._id}`);
+        console.log("Backend logged in. Navigating...");
+        navigate(`/donate/${orphanage?._id || "demo-001"}`);
       } else {
+        console.log("Not logged in. Showing modal.");
         setShowLoginModal(true);
       }
-    } catch {
+    } catch (err) {
+      console.log("Backend check failed (offline). Showing modal for fallback login.", err);
       setShowLoginModal(true);
     }
   };
