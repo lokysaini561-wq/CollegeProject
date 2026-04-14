@@ -16,37 +16,84 @@ function Model({ show, onClose, orphanageId }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("http://localhost:3200/adlogin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) {
-      if (data.token) localStorage.setItem("token", data.token);
-      setTimeout(() => { onClose(); navigate(`/donate/${orphanageId}`); }, 500);
-    } else {
-      setMsg("Invalid Email or Password ❌");
+
+    const demoAccounts = {
+      "lokesh@gmail.com": "lokesh",
+      "khushi@gmail.com": "khushi"
+    };
+
+    try {
+      const res = await fetch("http://localhost:3200/adlogin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setLoading(false);
+        setMsg("Login Successful! 🎉");
+        localStorage.removeItem("isDemoLoggedIn"); // Clear demo flag if real login works
+        if (data.token) localStorage.setItem("token", data.token);
+        setTimeout(() => { onClose(); navigate(`/donate/${orphanageId || ""}`); }, 800);
+      } else {
+        // Fallback for demo accounts if backend exists but doesn't have them
+        if (demoAccounts[email] && demoAccounts[email] === password) {
+          setLoading(false);
+          setMsg("Demo Login Successful! 🎉");
+          localStorage.setItem("isDemoLoggedIn", "true");
+          setTimeout(() => { onClose(); navigate(`/donate/${orphanageId || "demo-001"}`); }, 800);
+        } else {
+          setLoading(false);
+          setMsg("Invalid Email or Password ❌");
+        }
+      }
+    } catch (err) {
+      // Backend is down - use demo fallback
+      if (demoAccounts[email] && demoAccounts[email] === password) {
+        setTimeout(() => {
+          setLoading(false);
+          setMsg("Demo Login Successful! 🎉 (Offline Mode)");
+          localStorage.setItem("isDemoLoggedIn", "true");
+          setTimeout(() => {
+            onClose();
+            navigate(`/donate/${orphanageId || "demo-001"}`);
+          }, 800);
+        }, 500);
+      } else {
+        setLoading(false);
+        setMsg("Connection Error ❌ (Backend Offline)");
+      }
     }
+  };
+
+  const autofill = (e, p) => {
+    setEmail(e);
+    setPassword(p);
+    setMsg("");
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("http://localhost:3200/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password })
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) {
-      setMsg("Registration Successful 🎉 Please login");
-      setIsRegister(false);
-    } else {
-      setMsg("Registration Failed ❌");
+    try {
+      const res = await fetch("http://localhost:3200/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (data.success) {
+        setMsg("Registration Successful 🎉 Please login");
+        setIsRegister(false);
+      } else {
+        setMsg("Registration Failed ❌");
+      }
+    } catch (err) {
+      setLoading(false);
+      setMsg("Registration Failed ❌ (Backend Offline)");
     }
   };
 
@@ -56,7 +103,7 @@ function Model({ show, onClose, orphanageId }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="premium-modal modal-content border-0" style={{ borderRadius: "var(--hc-radius-xl)" }}>
-          
+
           {/* Header */}
           <div className="text-center pt-4 pb-2 px-4 position-relative">
             <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
@@ -144,7 +191,26 @@ function Model({ show, onClose, orphanageId }) {
               </button>
             </form>
 
-            <div className="auth-divider mt-3">
+            {!isRegister && (
+              <div className="mt-4 pt-3 border-top">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <div style={{ width: 4, height: 16, background: "var(--hc-primary)", borderRadius: 2 }}></div>
+                  <span className="small fw-bold text-uppercase" style={{ letterSpacing: "0.5px", color: "var(--hc-navy)" }}>Quick Login (Demo)</span>
+                </div>
+                <div className="d-flex gap-2">
+                  <button onClick={() => autofill("lokesh@gmail.com", "lokesh")} className="btn btn-sm flex-fill py-2"
+                    style={{ background: "var(--hc-surface-alt)", color: "var(--hc-navy)", border: "1px solid var(--hc-border)", borderRadius: "var(--hc-radius)", fontSize: "0.8rem", fontWeight: 500 }}>
+                    Lokesh
+                  </button>
+                  <button onClick={() => autofill("khushi@gmail.com", "khushi")} className="btn btn-sm flex-fill py-2"
+                    style={{ background: "var(--hc-surface-alt)", color: "var(--hc-navy)", border: "1px solid var(--hc-border)", borderRadius: "var(--hc-radius)", fontSize: "0.8rem", fontWeight: 500 }}>
+                    Khushi
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="auth-divider mt-4">
               <span className="small" style={{ color: "var(--hc-text-muted)" }}>or</span>
             </div>
 

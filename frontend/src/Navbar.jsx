@@ -23,6 +23,12 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
+    // Check demo login first
+    if (localStorage.getItem("isDemoLoggedIn") === "true") {
+      setIsLoggedIn(true);
+      return;
+    }
+
     fetch("http://localhost:3200/check-adlogin", {
       credentials: "include"
     })
@@ -44,6 +50,7 @@ function Navbar() {
   }, []);
 
   function handleLogout() {
+    localStorage.removeItem("isDemoLoggedIn");
     fetch("http://localhost:3200/logoutmain", {
       method: "GET",
       credentials: "include"
@@ -51,6 +58,10 @@ function Navbar() {
       .then(res => res.json())
       .then(data => {
         console.log(data.message);
+        setIsLoggedIn(false);
+        navigate("/");
+      })
+      .catch(() => {
         setIsLoggedIn(false);
         navigate("/");
       });
