@@ -52,13 +52,41 @@ const DonationPage = () => {
   };
 
   useEffect(() => {
-    fetch("http://localhost:3200/check-adlogin", { credentials: "include" })
-      .then(res => { if (res.status === 401) { setIsLoggedIn(false); return null; } return res.json(); })
-      .then(data => { if (data?.loggedIn) setIsLoggedIn(true); else setIsLoggedIn(false); })
-      .catch(() => setIsLoggedIn(false));
+    const checkAuth = async () => {
+      // Check demo login first
+      if (localStorage.getItem("isDemoLoggedIn") === "true") {
+        setIsLoggedIn(true);
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:3200/check-adlogin", { credentials: "include" });
+        if (res.status === 401) {
+          setIsLoggedIn(false);
+        } else {
+          const data = await res.json();
+          setIsLoggedIn(data?.loggedIn || false);
+        }
+      } catch (err) {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
   }, []);
 
-  useEffect(() => { if (isLoggedIn === false) navigate("/"); }, [isLoggedIn]);
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      // Small delay to allow state to settle
+      const timer = setTimeout(() => {
+        if (localStorage.getItem("isDemoLoggedIn") === "true") {
+          setIsLoggedIn(true);
+        } else {
+          navigate("/");
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, navigate]);
 
   if (isLoggedIn === null) {
     return (

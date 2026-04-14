@@ -16,10 +16,13 @@ function DetailPage() {
   const [usingDummy, setUsingDummy] = useState(false);
 
   const handleDonateClick = async () => {
-    if (usingDummy) {
-      setShowLoginModal(true);
+    // 1. Check Demo Login First
+    if (localStorage.getItem("isDemoLoggedIn") === "true") {
+      navigate(`/donate/${orphanage._id}`);
       return;
     }
+
+    // 2. Check Backend Login
     try {
       const res = await fetch("http://localhost:3200/check-adlogin", {
         credentials: "include"
