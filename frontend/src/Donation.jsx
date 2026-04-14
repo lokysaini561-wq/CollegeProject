@@ -22,10 +22,40 @@ const DonationPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   useEffect(() => {
+    // Check if it's a demo orphanage
+    if (id?.startsWith("demo-")) {
+      const demoOrph = DUMMY_ORPHANAGES.find(o => o._id === id);
+      if (demoOrph) {
+        setOrphanage(demoOrph);
+      } else {
+        setOrphanage(DUMMY_ORPHANAGES[0]); // Absolute fallback
+      }
+      setLoading(false);
+      return;
+    }
+
     fetch(`http://localhost:3200/orphanage/${id}`)
       .then(res => res.json())
-      .then(data => { setOrphanage(data); setLoading(false); })
-      .catch(err => { console.error(err); navigate("/find"); });
+      .then(data => { 
+        if (data) {
+          setOrphanage(data); 
+          setLoading(false); 
+        } else {
+          // Try dummy as secondary fallback
+          const demoOrph = DUMMY_ORPHANAGES.find(o => o._id === id) || DUMMY_ORPHANAGES[0];
+          setOrphanage(demoOrph);
+          setLoading(false);
+        }
+      })
+      .catch(err => { 
+        console.error(err); 
+        // Try dummy as last resort
+        const demoOrph = DUMMY_ORPHANAGES[0];
+        setOrphanage(demoOrph);
+        setLoading(false);
+        // If still nothing, move to location
+        if (!demoOrph) navigate("/location"); 
+      });
   }, [id, navigate]);
 
   const handleSubmit = (e) => {
